@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cofre Digital - Projeto Chave Mestra</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: #1e293b; padding: 2rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 100%; max-width: 480px; }
+        h1, h2 { color: #38bdf8; text-align: center; margin-top: 0; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
+        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        button { flex: 1; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-primary { background: #0284c7; color: white; }
+        .btn-primary:hover { background: #0369a1; }
+        .btn-secondary { background: #334155; color: white; }
+        .btn-secondary:hover { background: #475569; }
+        .lgpd-box { background: #0f172a; padding: 12px; border-radius: 6px; font-size: 0.8rem; color: #94a3b8; margin-top: 15px; border-left: 3px solid #0284c7; text-align: justify; }
+        #cofre-area { display: none; background: #064e3b; padding: 15px; border-radius: 6px; margin-top: 15px; border: 1px solid #10b981; }
+        .status { text-align: center; margin-top: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h1>⚖️ Cofre Digital</h1>
+        <p style="text-align: center; color: #94a3b8; font-size: 0.9rem;">Escritório de Advocacia - Autenticação Sem Senha</p>
+
+        <div id="auth-area">
+            <label for="username">Identificação do Advogado:</label>
+            <input type="text" id="username" placeholder="Ex: dr.silva">
+
+            <div class="btn-group">
+                <button class="btn-secondary" onclick="cadastrarDispositivo()">1. Ativar PIN do Aparelho</button>
+                <button class="btn-primary" onclick="acessarCofre()">2. Entrar no Cofre</button>
+            </div>
+
+            <!-- EXIGÊNCIA OBRIGATÓRIA: PARÁGRAFO LGPD -->
+            <div class="lgpd-box">
+                <strong>Termos de Uso e Proteção de Dados (LGPD):</strong>  
+                Para garantir a máxima segurança dos processos sigilosos, este cofre digital utiliza a autenticação nativa do seu dispositivo (WebAuthn). Informamos que <strong>sua senha local, PIN, padrão ou dados biométricos NUNCA são enviados, coletados ou armazenados em nossos servidores</strong>. A validação é realizada exclusivamente pelo sistema operacional do seu próprio aparelho, que nos envia apenas uma confirmação de identidade criptografada. Em conformidade com a LGPD (Lei nº 13.709/2018), armazenamos apenas o seu nome de usuário e a chave pública associada ao seu dispositivo para controle de acesso.
+            </div>
+        </div>
+
+        <div id="cofre-area">
+            <h2>📄 Processos Confidenciais Liberados</h2>
+            <ul>
+                <li>Caso #4928 - Ação Sigilosa X Corp</li>
+                <li>Caso #1029 - Relatório Auditado 2026</li>
+            </ul>
+            <p style="font-size: 0.8rem; color: #a7f3d0;">Sessão protegida. Expira automaticamente em 5 minutos de inatividade.</p>
+        </div>
+
+        <p id="status-msg" class="status"></p>
+    </div>
+
+    <!-- Script oficial para tratar WebAuthn no Frontend de forma simplificada -->
+    <script src="https://unpkg.com/@simplewebauthn/browser@8.3.4/dist/bundle/index.umd.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
