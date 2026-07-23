@@ -52,7 +52,7 @@ app.post('/api/register-options', async (req, res) => {
         authenticatorSelection: {
             authenticatorAttachment: 'platform', // Plataforma local (Windows Hello/PIN/TouchID)
             userVerification: 'required',
-            residentKey: 'discouraged',
+            residentKey: 'preferred',            // <-- Atualizado para ignorar o bloqueio do gerenciador do Chrome
         },
     });
 
