@@ -8,6 +8,10 @@ const {
 } = require('@simplewebauthn/server');
 
 const app = express();
+
+// IMPORTANTE: Necessário para o Render/Express tratar HTTPS e cookies corretamente
+app.set('trust proxy', 1);
+
 app.use(express.json());
 app.use(express.static('public'));
 
@@ -15,15 +19,20 @@ app.use(session({
     secret: 'chave-mestra-advocacia-segura',
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 5 * 60 * 1000 } // Sessão expira em 5 minutos
+    cookie: { 
+        maxAge: 5 * 60 * 1000, // 5 minutos
+        secure: process.env.NODE_ENV === 'production' // Ativa HTTPS em produção
+    }
 }));
 
-// Banco de dados em memória para demonstração
+// Banco de dados em memória
 const usersDB = {}; 
 
-// --- CONFIGURAÇÃO DINÂMICA DE DOMÍNIO (LOCAL x RENDER) ---
-const EXPECTED_ORIGIN = process.env.RENDER_EXTERNAL_URL || 'http://localhost:3000';
-// Extrai apenas o hostname (ex: 'chave-mestra.onrender.com' ou 'localhost')
+// --- CONFIGURAÇÃO DINÂMICA DE DOMÍNIO ---
+// Pega a URL do Render via variável customizada ou cai para o localhost
+const EXPECTED_ORIGIN = process.env.RENDER_EXTERNAL_URL || process.env.URL_PROJETO || 'https://projeto-chave-mestra.onrender.com';
+
+// Extrai apenas o hostname (ex: 'projeto-chave-mestra.onrender.com')
 const RP_ID = new URL(EXPECTED_ORIGIN).hostname;
 
 // --- 1. REGISTRO DO DISPOSITIVO (CADASTRO) ---
@@ -41,9 +50,9 @@ app.post('/api/register-options', async (req, res) => {
         userID: usersDB[username].id,
         userName: username,
         authenticatorSelection: {
-            authenticatorAttachment: 'platform', // Força o uso do SO local (Windows Hello/Android)
-            userVerification: 'required',        // Exige PIN / Desenho / Biometria
-            residentKey: 'discouraged',          // Força o uso do PIN local em vez da nuvem do Google
+            authenticatorAttachment: 'platform', // Plataforma local (Windows Hello/PIN/TouchID)
+            userVerification: 'required',
+            residentKey: 'discouraged',
         },
     });
 
@@ -68,7 +77,6 @@ app.post('/api/register-verify', async (req, res) => {
         if (verification.verified && verification.registrationInfo) {
             const { credentialPublicKey, credentialID, counter } = verification.registrationInfo;
             
-            // Converte Uint8Array para Base64/Hex seguro para armazenar
             usersDB[username].devices.push({
                 credentialID: Buffer.from(credentialID).toString('base64url'),
                 credentialPublicKey: Buffer.from(credentialPublicKey).toString('base64url'),
@@ -78,7 +86,7 @@ app.post('/api/register-verify', async (req, res) => {
             return res.json({ success: true, message: 'Dispositivo cadastrado com sucesso!' });
         }
     } catch (error) {
-        console.error(error);
+        console.error('Erro de verificação:', error);
         return res.status(400).json({ error: 'Falha na verificação do dispositivo' });
     }
 });
@@ -94,7 +102,7 @@ app.post('/api/login-options', async (req, res) => {
 
     const options = await generateAuthenticationOptions({
         rpID: RP_ID,
-        userVerification: 'required', // Exige confirmação de PIN/Biometria no login
+        userVerification: 'required',
         allowCredentials: user.devices.map(dev => ({
             id: Buffer.from(dev.credentialID, 'base64url'),
             type: 'public-key',
@@ -111,6 +119,10 @@ app.post('/api/login-verify', async (req, res) => {
     const username = req.session.username;
     const user = usersDB[username];
     const expectedChallenge = req.session.currentChallenge;
+
+    if (!user) {
+        return res.status(400).json({ error: 'Sessão expirada ou usuário inválido' });
+    }
 
     const dbAuthenticator = user.devices.find(
         dev => dev.credentialID === body.id
@@ -138,7 +150,7 @@ app.post('/api/login-verify', async (req, res) => {
             return res.json({ success: true, message: 'Acesso liberado ao Cofre!' });
         }
     } catch (error) {
-        console.error(error);
+        console.error('Erro no login:', error);
         return res.status(400).json({ error: 'Falha na autenticação do PIN/SO' });
     }
 });
