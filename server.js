@@ -9,7 +9,6 @@ const {
 
 const app = express();
 
-// IMPORTANTE: Necessário para o Render/Express tratar HTTPS e cookies corretamente
 app.set('trust proxy', 1);
 
 app.use(express.json());
@@ -20,19 +19,14 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: { 
-        maxAge: 5 * 60 * 1000, // 5 minutos
-        secure: process.env.NODE_ENV === 'production' // Ativa HTTPS em produção
+        maxAge: 5 * 60 * 1000,
+        secure: process.env.NODE_ENV === 'production'
     }
 }));
 
-// Banco de dados em memória
 const usersDB = {}; 
 
-// --- CONFIGURAÇÃO DINÂMICA DE DOMÍNIO ---
-// Pega a URL do Render via variável customizada ou cai para o localhost
 const EXPECTED_ORIGIN = process.env.RENDER_EXTERNAL_URL || process.env.URL_PROJETO || 'https://projeto-chave-mestra.onrender.com';
-
-// Extrai apenas o hostname (ex: 'projeto-chave-mestra.onrender.com')
 const RP_ID = new URL(EXPECTED_ORIGIN).hostname;
 
 // --- 1. REGISTRO DO DISPOSITIVO (CADASTRO) ---
@@ -50,9 +44,8 @@ app.post('/api/register-options', async (req, res) => {
         userID: usersDB[username].id,
         userName: username,
         authenticatorSelection: {
-            authenticatorAttachment: 'platform', // Plataforma local (Windows Hello/PIN/TouchID)
             userVerification: 'required',
-            residentKey: 'preferred',            // <-- Atualizado para ignorar o bloqueio do gerenciador do Chrome
+            residentKey: 'preferred',
         },
     });
 
@@ -155,7 +148,6 @@ app.post('/api/login-verify', async (req, res) => {
     }
 });
 
-// --- INICIALIZAÇÃO DO SERVIDOR ---
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🔐 Servidor "Chave Mestra" rodando na porta ${PORT}`);
